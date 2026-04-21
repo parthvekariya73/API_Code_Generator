@@ -48,10 +48,10 @@ public class SchemaParserService {
         ModuleConfig config = new ModuleConfig();
         
         // 1. Table & Schema Name
-        String fullTableName = createTable.getTable().getName();
+        String fullTableName = unquote(createTable.getTable().getName());
         String schemaName = createTable.getTable().getSchemaName();
         config.setTableName(fullTableName);
-        config.setSchemaName(schemaName != null ? schemaName : "public");
+        config.setSchemaName(schemaName != null ? unquote(schemaName) : "public");
         
         // 2. Module & Package Guessing
         String rawName = stripPrefix(fullTableName);
@@ -63,7 +63,7 @@ public class SchemaParserService {
         List<ColumnDefinition> colDefs = createTable.getColumnDefinitions();
         
         for (ColumnDefinition col : colDefs) {
-            String colName = col.getColumnName();
+            String colName = unquote(col.getColumnName());
             
             // Skip automated fields - they will be added by the generator based on config
             if (isAutomatedField(colName)) continue;
@@ -81,7 +81,7 @@ public class SchemaParserService {
             field.setUnique(isUnique(col));
             
             // Primary Key Check
-            if (isPrimaryKey(col, createTable)) {
+            if (isPrimaryKey(col, createTable, colName)) {
                 config.setPrimaryKey(field.getName());
                 config.setPrimaryKeyType(field.getType());
                 // If it's PK, we don't put it in the "fields" list as generator handles it separately
@@ -104,8 +104,9 @@ public class SchemaParserService {
             for (Index index : createTable.getIndexes()) {
                 if ("UNIQUE".equalsIgnoreCase(index.getType())) {
                     UniqueConstraint uc = new UniqueConstraint();
-                    uc.setName(index.getName() != null ? index.getName() : "uq_" + config.getTableName() + "_" + System.currentTimeMillis());
+                    uc.setName(index.getName() != null ? unquote(index.getName()) : "uq_" + config.getTableName() + "_" + System.currentTimeMillis());
                     uc.setFields(index.getColumnsNames().stream()
+                            .map(this::unquote)
                             .map(c -> NamingUtil.decapitalize(NamingUtil.toPascalCase(c)))
                             .collect(Collectors.toList()));
                     uc.setMessage(NamingUtil.toPascalCase(config.getModuleName()) + " already exists with these values.");
@@ -116,6 +117,11 @@ public class SchemaParserService {
 
         log.info("Successfully parsed SQL for module: {}", config.getModuleName());
         return config;
+    }
+
+    private String unquote(String name) {
+        if (name == null) return null;
+        return name.replace("\"", "").replace("`", "").replace("[", "").replace("]", "");
     }
 
     private String stripPrefix(String tableName) {
@@ -132,16 +138,23 @@ public class SchemaParserService {
     }
 
     private String mapSqlToJavaType(String dbType) {
+        if (dbType == null) return "String";
         String type = dbType.toUpperCase();
-        if (type.contains("VARCHAR") || type.contains("TEXT") || type.contains("CHAR")) return "String";
-        if (type.contains("BIGINT") || type.contains("SERIAL")) return "Long";
-        if (type.contains("INT") || type.contains("INTEGER")) return "Integer";
-        if (type.contains("SMALLINT")) return "Short";
-        if (type.contains("BOOLEAN") || type.contains("BIT")) return "Boolean";
+        
+        if (type.contains("VARCHAR") || type.contains("TEXT") || type.contains("CHAR") || type.contains("JSON") || type.contains("CLOB")) return "String";
+        if (type.contains("BIGINT") || type.contains("BIGSERIAL") || type.contains("INT8")) return "Long";
+        if (type.contains("SMALLINT") || type.contains("SMALLSERIAL") || type.contains("INT2")) return "Short";
+        if (type.contains("INT") || type.contains("INTEGER") || type.contains("SERIAL") || type.contains("INT4") || type.contains("SERIAL4")) return "Integer";
+        if (type.contains("BOOLEAN") || type.contains("BIT") || type.contains("BOOL")) return "Boolean";
         if (type.contains("DECIMAL") || type.contains("NUMERIC") || type.contains("MONEY")) return "BigDecimal";
+        if (type.contains("DOUBLE") || type.contains("FLOAT8")) return "Double";
+        if (type.contains("REAL") || type.contains("FLOAT4") || type.contains("FLOAT")) return "Float";
         if (type.contains("TIMESTAMP") || type.contains("DATETIME")) return "LocalDateTime";
+        if (type.contains("TIME") && !type.contains("TIMESTAMP")) return "LocalTime";
         if (type.contains("DATE")) return "LocalDate";
         if (type.contains("UUID")) return "UUID";
+        if (type.contains("BYTEA") || type.contains("BLOB") || type.contains("BINARY")) return "byte[]";
+        
         return "String"; // Default
     }
 
@@ -157,7 +170,7 @@ public class SchemaParserService {
         return specs.contains("UNIQUE");
     }
 
-    private boolean isPrimaryKey(ColumnDefinition col, CreateTable createTable) {
+    private boolean isPrimaryKey(ColumnDefinition col, CreateTable createTable, String unquotedColName) {
         // Check inline spec
         if (col.getColumnSpecs() != null) {
             String specs = String.join(" ", col.getColumnSpecs()).toUpperCase();
@@ -168,7 +181,11 @@ public class SchemaParserService {
         if (createTable.getIndexes() != null) {
              for (Index index : createTable.getIndexes()) {
                  if ("PRIMARY KEY".equalsIgnoreCase(index.getType())) {
-                     if (index.getColumnsNames().contains(col.getColumnName())) return true;
+                     for (String cName : index.getColumnsNames()) {
+                         if (unquote(cName).equalsIgnoreCase(unquotedColName)) {
+                             return true;
+                         }
+                     }
                  }
              }
         }

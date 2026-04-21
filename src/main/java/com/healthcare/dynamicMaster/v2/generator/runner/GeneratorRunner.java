@@ -51,6 +51,7 @@ import java.util.Map;
 @RequestMapping("/api/v2/generator")
 @RequiredArgsConstructor
 @Profile("dev") // ← SAFETY: only available in dev profile
+@CrossOrigin(origins = "*")
 public class GeneratorRunner {
 
     private final CodeGeneratorEngine engine;
@@ -100,7 +101,7 @@ public class GeneratorRunner {
      *   Content-Type: application/json
      *   Body: { "moduleName": "product_category", ... }
      */
-    @PostMapping("/generate")
+    // @PostMapping("/generate")
     public ResponseEntity<Map<String, Object>> generateFromBody(
             @RequestBody ModuleConfig config,
             @RequestParam(defaultValue = "false") boolean dryRun) {
@@ -149,7 +150,7 @@ public class GeneratorRunner {
      *   POST /api/v2/generator/generate?config=product_category
      *   → reads generator-configs/product_category.json
      */
-    @PostMapping(value = "/generate", params = "config")
+    // @PostMapping(value = "/generate", params = "config")
     public ResponseEntity<Map<String, Object>> generateFromFile(
             @RequestParam String config,
             @RequestParam(defaultValue = "false") boolean dryRun) throws Exception {
@@ -173,7 +174,7 @@ public class GeneratorRunner {
      *   POST /api/v2/generator/generate/all
      *   → generates all *.json files in generator.config-dir
      */
-    @PostMapping("/generate/all")
+    // @PostMapping("/generate/all")
     public ResponseEntity<Map<String, Object>> generateAll(
             @RequestParam(defaultValue = "false") boolean dryRun) throws Exception {
 
@@ -194,7 +195,7 @@ public class GeneratorRunner {
      * Usage:
      *   GET /api/v2/generator/preview?config=product_category
      */
-    @GetMapping("/preview")
+    // @GetMapping("/preview")
     public ResponseEntity<Map<String, Object>> preview(
             @RequestParam String config) throws Exception {
 

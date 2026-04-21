@@ -12,9 +12,9 @@ spring:
       enabled: true
 
   datasource:
-    url: jdbc:postgresql://${DEV_DB_HOST:165.232.176.176}:${DEV_DB_PORT:5444}/${DEV_DB_NAME:e_com_admin}
-    username: ${DEV_DB_USERNAME:topia_admin}
-    password: ${DEV_DB_PASSWORD:T@p$aPI#@alldb50}    # MUST come from env
+    url: jdbc:postgresql://${DEV_DB_HOST}:${DEV_DB_PORT}/${DEV_DB_NAME}
+    username: ${DEV_DB_USERNAME}
+    password: ${DEV_DB_PASSWORD}    # MUST come from env
     hikari:
       maximum-pool-size: 10          # Increased from 5 (healthcare needs more)
       leak-detection-threshold: 3000 # Catch leaks faster
@@ -44,12 +44,12 @@ spring:
 
   data:
     redis:
-      host: ${DEV_REDIS_HOST:localhost}
-      port: ${DEV_REDIS_PORT:6379}
+      host: ${DEV_REDIS_HOST}
+      port: ${DEV_REDIS_PORT}
       password:
 
   kafka:
-    bootstrap-servers: ${DEV_KAFKA_SERVERS:localhost:9092}
+    bootstrap-servers: ${DEV_KAFKA_SERVERS}
     consumer:
       auto-offset-reset: earliest
 
