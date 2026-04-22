@@ -129,14 +129,25 @@ public class RepositoryGenerator {
 
     private void generateExistsMethods(CodeTemplate t, UniqueConstraint uc,
                                        ModuleConfig config, String entityName) {
-        // WHERE clause: LOWER(e.field) = LOWER(:field) AND ...
+        // Build conditions based on field types
         String conditions = uc.getFields().stream()
-                .map(f -> "LOWER(e." + f + ") = LOWER(:" + f + ")")
+                .map(f -> {
+                    String type = getFieldType(config, f);
+                    if ("String".equalsIgnoreCase(type)) {
+                        return "LOWER(e." + f + ") = LOWER(:" + f + ")";
+                    } else if ("UUID".equalsIgnoreCase(type)) {
+                        // Cast UUID to text for safer comparison in some DBs/JPQL versions if needed, 
+                        // but usually e.f = :f is fine for UUID.
+                        return "e." + f + " = :" + f;
+                    } else {
+                        return "e." + f + " = :" + f;
+                    }
+                })
                 .collect(Collectors.joining(" AND "));
 
-        // Method parameters: @Param("field") String field, ...
+        // Method parameters with correct Java types
         String params = uc.getFields().stream()
-                .map(f -> "@Param(\"" + f + "\") String " + f)
+                .map(f -> "@Param(\"" + f + "\") " + NamingUtil.toJavaType(getFieldType(config, f)) + " " + f)
                 .collect(Collectors.joining(", "));
 
         // ── Create-time exists check ──────────────────────────
@@ -323,5 +334,15 @@ public class RepositoryGenerator {
                         config.getTableName() + " e WHERE e.status = 1 ORDER BY e." +
                         labelCol + " ASC\", nativeQuery = true)")
                 .line("List<" + entityName + "DropdownProjection> findAllForDropdown();");
+    }
+    private String getFieldType(ModuleConfig config, String fieldName) {
+        if (fieldName.equals(config.getUuidField())) return "UUID";
+        if (fieldName.equals(config.getPrimaryKey())) return config.getPrimaryKeyType();
+
+        return config.getFields().stream()
+                .filter(f -> f.getName().equals(fieldName))
+                .findFirst()
+                .map(FieldConfig::getType)
+                .orElse("String");
     }
 }

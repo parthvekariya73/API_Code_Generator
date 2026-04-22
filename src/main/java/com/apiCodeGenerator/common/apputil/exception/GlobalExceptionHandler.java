@@ -12,7 +12,6 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
-import org.springframework.dao.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -41,7 +40,6 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.InvalidParameterException;
-import java.sql.SQLException;
 import java.time.DateTimeException;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
@@ -69,11 +67,9 @@ public class GlobalExceptionHandler {
     private static final String ERR_CONFLICT          = "CONFLICT";
     private static final String ERR_TIMEOUT           = "TIMEOUT";
     private static final String ERR_SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE";
-    private static final String ERR_DATABASE          = "DATABASE_ERROR";
     private static final String ERR_INTERNAL          = "INTERNAL_ERROR";
 
     private static final String MSG_DEFAULT           = "An unexpected error occurred";
-    private static final String MSG_DATABASE          = "Database error occurred";
     private static final String MSG_INTERNAL          = "Internal server error";
     private static final String MSG_NOT_FOUND         = "Resource not found";
     private static final String MSG_CONFLICT          = "Data conflict or duplicate entry";
@@ -347,13 +343,6 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.NOT_FOUND, MSG_NOT_FOUND, ERR_NOT_FOUND, request);
     }
 
-    @ExceptionHandler(EmptyResultDataAccessException.class)
-    public ResponseEntity<ApiResponse<?>> handleEmptyResult(
-            EmptyResultDataAccessException ex, HttpServletRequest request) {
-        log.warn("Empty result: {}", ex.getMessage());
-        return respond(HttpStatus.NOT_FOUND, MSG_NOT_FOUND, ERR_NOT_FOUND, request);
-    }
-
     // =========================================================
     // 405 / 415 — Method / Media Type
     // =========================================================
@@ -374,31 +363,6 @@ public class GlobalExceptionHandler {
         String message = String.format("Content type '%s' is not supported", ex.getContentType());
         log.warn("Media type not supported: {}", message);
         return respond(HttpStatus.UNSUPPORTED_MEDIA_TYPE, message, ERR_BAD_REQUEST, request);
-    }
-
-    // =========================================================
-    // 409 — Conflict
-    // =========================================================
-
-    @ExceptionHandler(AlreadyExistException.class)
-    public ResponseEntity<ApiResponse<?>> handleAlreadyExist(
-            AlreadyExistException ex, HttpServletRequest request) {
-        log.warn("Already exists: {}", ex.getMessage());
-        return respond(HttpStatus.CONFLICT, ex.getMessage(), ERR_ALREADY_EXIST, request);
-    }
-
-    @ExceptionHandler({DuplicateKeyException.class, DataIntegrityViolationException.class})
-    public ResponseEntity<ApiResponse<?>> handleConflict(
-            Exception ex, HttpServletRequest request) {
-        log.warn("Conflict: {}", ex.getMessage());
-        return respond(HttpStatus.CONFLICT, MSG_CONFLICT, ERR_CONFLICT, request);
-    }
-
-    @ExceptionHandler(OptimisticLockingFailureException.class)
-    public ResponseEntity<ApiResponse<?>> handleOptimisticLocking(
-            OptimisticLockingFailureException ex, HttpServletRequest request) {
-        log.warn("Optimistic locking failure: {}", ex.getMessage());
-        return respond(HttpStatus.CONFLICT, "Data was updated by another user", ERR_CONFLICT, request);
     }
 
     // =========================================================
@@ -458,52 +422,8 @@ public class GlobalExceptionHandler {
     }
 
     // =========================================================
-    // 500 — Database
+    // 500 — HTTP
     // =========================================================
-
-   /* @ExceptionHandler(PSQLException.class)
-    public ResponseEntity<ApiResponse<?>> handlePSQL(
-            PSQLException ex, HttpServletRequest request) {
-
-        String message = switch (ex.getSQLState() != null ? ex.getSQLState() : "") {
-            case "23505" -> "Duplicate entry found";
-            case "23503" -> "Invalid reference to another record";
-            case "23502" -> "Required field is missing";
-            default      -> MSG_DATABASE;
-        };
-
-        log.error("PSQL error [{}]: {}", ex.getSQLState(), ex.getMessage());
-        return respond(HttpStatus.INTERNAL_SERVER_ERROR, message, ERR_DATABASE, request);
-    }*/
-//    @ExceptionHandler(PSQLException.class)
-//    public ResponseEntity<ApiResponse<?>> handlePSQL(
-//            PSQLException ex, HttpServletRequest request) {
-//
-//        String message = switch (ex.getSQLState() != null ? ex.getSQLState() : "") {
-//            case "23505" -> "Duplicate entry found";
-//            case "23503" -> "Invalid reference to another record";
-//            case "23502" -> "Required field is missing";
-//            default      -> MSG_DATABASE;
-//        };
-//
-//        log.error("PSQL error [{}]: {}", ex.getSQLState(), ex.getMessage());
-//        return respond(HttpStatus.INTERNAL_SERVER_ERROR, message, ERR_DATABASE, request);
-//    }
-
-    @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<ApiResponse<?>> handleDataAccess(
-            DataAccessException ex, HttpServletRequest request) {
-        log.error("Data access error: {}", ex.getMessage(), ex);
-        return respond(HttpStatus.INTERNAL_SERVER_ERROR,
-                "Database access error", ERR_DATABASE, request);
-    }
-
-    @ExceptionHandler(SQLException.class)
-    public ResponseEntity<ApiResponse<?>> handleSQL(
-            SQLException ex, HttpServletRequest request) {
-        log.error("SQL error: {}", ex.getMessage(), ex);
-        return respond(HttpStatus.INTERNAL_SERVER_ERROR, MSG_DATABASE, ERR_DATABASE, request);
-    }
 
     @ExceptionHandler(HttpMessageNotWritableException.class)
     public ResponseEntity<ApiResponse<?>> handleHttpMessageNotWritable(

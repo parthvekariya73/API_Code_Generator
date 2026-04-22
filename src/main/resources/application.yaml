@@ -5,104 +5,7 @@ spring:
   application:
     name: apiCodeGenerator
 
-  # ── PostgreSQL with REPLICA support ──
-  datasource:
-    type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-
-    hikari:
-      pool-name: apiCodeGenerator-HikariPool
-      minimum-idle: 10              # Increased for apiCodeGenerator SLA
-      maximum-pool-size: 50         # Tune: (cores * 2) + spindles
-      idle-timeout: 300000          # 5 min (was 30s - too aggressive)
-      connection-timeout: 5000      # 5 seconds max wait
-      max-lifetime: 1800000         # 30 min
-      keepalive-time: 300000        # 5 min (was 60s)
-      leak-detection-threshold: 5000 # Detect leaks after 5 sec
-      connection-test-query: SELECT 1
-      validation-timeout: 3000
-      register-mbeans: true         # JMX monitoring
-
-      data-source-properties:
-        reWriteBatchedInserts: true
-        cachePrepStmts: true         # ⭐ CRITICAL for performance
-        prepStmtCacheSize: 500
-        prepStmtCacheSqlLimit: 2048
-        useServerPrepStmts: true
-        ApplicationName: apiCodeGenerator
-
-  # ── Read-Only Replica for reporting/analytics ──
-  datasource-replica:
-    url: ${DB_REPLICA_URL}
-    username: ${DB_REPLICA_USERNAME}
-    password: ${DB_REPLICA_PASSWORD}
-    hikari:
-      pool-name: apiCodeGenerator-ReplicaPool
-      maximum-pool-size: 30
-      read-only: true
-
-  # ── JPA Optimizations ──
-  jpa:
-    open-in-view: false              # ✅ Good - you already had this
-    show-sql: false
-    database: POSTGRESQL
-    hibernate:
-      ddl-auto: none                 # 🔥 CHANGED from 'update' - DANGEROUS
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
-        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: false
-        default_batch_fetch_size: 50   # ⭐ Increased from 25 for apiCodeGenerator entities
-        max_fetch_depth: 3
-        jdbc:
-          batch_size: 100               # ⭐ Increased from 50 for bulk appointment updates
-          batch_versioned_data: true
-          fetch_size: 200               # ⭐ For large result sets
-          lob:
-            non_contextual_creation: true
-        order_inserts: true
-        order_updates: true
-        generate_statistics: false
-        jdbc.time_zone: UTC             # ⭐ Critical for appointment times
-
-        # ⭐ Second-level cache for static data (resources, doctors)
-        cache:
-          use_second_level_cache: false
-          use_query_cache: false
-          region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
-        javax.cache:
-          provider: org.ehcache.jsr107.EhcacheCachingProvider
-          uri: classpath:ehcache.xml
-
-  # ── Redis for Rate Limiting & Caching ──
-  cache:
-    type: redis
-    redis:
-      time-to-live: 600000      # 10 min default
-      cache-null-values: false
-      key-prefix: "hc:"
-      use-key-prefix: true
-
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD}
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 20
-          max-idle: 10
-          min-idle: 5
-          max-wait: 2000ms
-
-  # ── Async Task Executor (for appointment optimization) ──
+  # Async Task Executor
   task:
     execution:
       pool:
@@ -115,37 +18,6 @@ spring:
       pool:
         size: 10
       thread-name-prefix: "scheduler-"
-
-  # ── Kafka for Event Sourcing (appointment lifecycle) ──
-  kafka:
-    bootstrap-servers: ${KAFKA_SERVERS}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      compression-type: snappy       # ⭐ Performance
-      batch-size: 16384
-      buffer-memory: 33554432
-      properties:
-        enable.idempotence: true
-        max.in.flight.requests.per.connection: 5
-    consumer:
-      group-id: apiCodeGenerator-optimizer-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "com.apiCodeGenerator.*"
-      max-poll-records: 100
-      fetch-min-size: 1024
-
-Kafka:
-  enabled: true
-  topics:
-    login-events: login-events
-    audit-events: audit-events
-    session-events: session-events
-    notification-events: notification-events
-    error-log-events: error-log-events
-    deal-history-events: deal-history-events
 
 server:
   port: 9090
@@ -200,8 +72,6 @@ logging:
     root: INFO
     com.apiCodeGenerator: INFO
     org.springframework.web: WARN
-    org.hibernate: WARN
-    com.zaxxer.hikari: WARN
   pattern:
     console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"

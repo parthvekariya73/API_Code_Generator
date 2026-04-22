@@ -92,8 +92,8 @@ public class EntityGenerator {
 
         return new ImportRegistry()
                 .addAll(
-                        "com.healthcare.common.apputil.utils.commonutil.CommonUtil",
-                        "com.healthcare.common.apputil.utils.commonutil.SecurityUtils",
+                        "com.apiCodeGenerator.common.apputil.utils.commonutil.CommonUtil",
+                        "com.apiCodeGenerator.common.apputil.utils.commonutil.SecurityUtils",
                         "jakarta.persistence.*",
                         "jakarta.validation.constraints.*",
                         "lombok.*",

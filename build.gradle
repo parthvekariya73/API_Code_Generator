@@ -73,14 +73,12 @@ dependencies {
 
 	// ── Spring Boot core starters ─────────────────────────────────────────────
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	// ── Spring Boot core starters ─────────────────────────────────────────────
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'org.springframework.boot:spring-boot-starter-cache'
-	implementation 'org.springframework.boot:spring-boot-starter-kafka'
 
 	// ── Security + JWT ────────────────────────────────────────────────────────
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -89,20 +87,13 @@ dependencies {
 	runtimeOnly   "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
 	// ── Database ──────────────────────────────────────────────────────────────
-	implementation 'org.postgresql:postgresql'
-	implementation 'org.liquibase:liquibase-core'
-
-	// Boot 4 ships Hibernate 7 — use the hibernate-70 artifact (not hibernate-63)
-	// implementation "io.hypersistence:hypersistence-utils-hibernate-71:${hypersistenceVersion}"
-	// implementation "io.hypersistence:hypersistence-utils-hibernate-70:${hypersistenceVersion}"
-	// implementation "io.hypersistence:hypersistence-utils-hibernate-63:3.8.2"
+	// Removed PostgreSQL and Liquibase
 
 	// ── Caching — Caffeine ────────────────────────────────────────────────────
-	implementation "com.github.ben-manes.caffeine:caffeine:${caffeineVersion}"
+	// Removed Caffeine
 
 	// ── Redis ─────────────────────────────────────────────────────────────────
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation "redis.clients:jedis:${jedisVersion}"
+	// Removed Redis and Jedis
 
 	// ── Modulith ──────────────────────────────────────────────────────────────
     // implementation 'org.springframework.modulith:spring-modulith-starter-core'

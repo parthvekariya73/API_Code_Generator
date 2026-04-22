@@ -11,48 +11,6 @@ spring:
     livereload:
       enabled: true
 
-  datasource:
-    url: jdbc:postgresql://${DEV_DB_HOST:localhost}:${DEV_DB_PORT:5432}/${DEV_DB_NAME:healthcare_db}
-    username: ${DEV_DB_USERNAME:parthvekariya}
-    password: ${DEV_DB_PASSWORD:}    # MUST come from env
-    hikari:
-      maximum-pool-size: 10          # Increased from 5 (apiCodeGenerator needs more)
-      leak-detection-threshold: 3000 # Catch leaks faster
-      minimum-idle: 2
-
-      # ⭐ NEW: H2 for integration testing (optional)
-      # Uncomment for unit tests:
-      # datasource:
-      #   url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
-      #   driver-class-name: org.h2.Driver
-
-  jpa:
-    show-sql: true                    # OK in dev
-    hibernate:
-      ddl-auto: validate              # ✅ Keep validate, not update
-    properties:
-      hibernate:
-        generate_statistics: true
-        jdbc.batch_size: 50           # Smaller batch for dev
-        format_sql: true
-        use_sql_comments: true
-
-  cache:
-    type: redis
-    redis:
-      time-to-live: 300000            # 5 min in dev
-
-  data:
-    redis:
-      host: ${DEV_REDIS_HOST:localhost}
-      port: ${DEV_REDIS_PORT:6379}
-      password:
-
-  kafka:
-    bootstrap-servers: ${DEV_KAFKA_SERVERS:localhost:9092}
-    consumer:
-      auto-offset-reset: earliest
-
 server:
   port: 8081                          # Different from prod default
   error:
@@ -82,10 +40,6 @@ logging:
     root: INFO
     com.apiCodeGenerator: DEBUG
     org.springframework.web: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.data.redis: DEBUG
-    org.apache.kafka: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 

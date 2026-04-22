@@ -183,13 +183,18 @@ public class ServiceGenerator {
 
                     // Unique constraint checks
                     for (UniqueConstraint uc : config.getUniqueConstraints()) {
-                        String params = uc.getFields().stream()
-                                .map(f -> "requestDTO." + NamingUtil.getter(f) + "()")
-                                .collect(Collectors.joining(", "));
-                        inner.line("if (repository." + uc.existsMethodName() + "(" + params + ")) {");
-                        inner.indent(g -> g.line("throw new BusinessException(" + config.resolvedDuplicateCode() + ");"));
-                        inner.line("}");
-                        inner.blank();
+                        // Only generate check if all fields are present in requestDTO
+                        if (uc.getFields().stream().allMatch(f -> isFieldInRequest(config, f))) {
+                            String params = uc.getFields().stream()
+                                    .map(f -> "requestDTO." + NamingUtil.getter(f) + "()")
+                                    .collect(Collectors.joining(", "));
+                            inner.line("if (repository." + uc.existsMethodName() + "(" + params + ")) {");
+                            inner.indent(g -> g.line("throw new BusinessException(" + config.resolvedDuplicateCode() + ");"));
+                            inner.line("}");
+                            inner.blank();
+                        } else {
+                            log.debug("Skipping unique check {} because some fields are missing from RequestDTO", uc.existsMethodName());
+                        }
                     }
 
                     inner.line(entityName + " entity = mapper.toEntity(requestDTO);");
@@ -222,14 +227,17 @@ public class ServiceGenerator {
 
                     // Unique constraint checks (exclude self)
                     for (UniqueConstraint uc : config.getUniqueConstraints()) {
-                        String params = uc.getFields().stream()
-                                .map(f -> "requestDTO." + NamingUtil.getter(f) + "()")
-                                .collect(Collectors.joining(", "));
-                        inner.line("if (repository." + uc.existsNotIdMethodName() +
-                                "(entity." + pkGetter + "(), " + params + ")) {");
-                        inner.indent(g -> g.line("throw new BusinessException(" + config.resolvedDuplicateCode() + ");"));
-                        inner.line("}");
-                        inner.blank();
+                        // Only generate check if all fields are present in requestDTO
+                        if (uc.getFields().stream().allMatch(f -> isFieldInRequest(config, f))) {
+                            String params = uc.getFields().stream()
+                                    .map(f -> "requestDTO." + NamingUtil.getter(f) + "()")
+                                    .collect(Collectors.joining(", "));
+                            inner.line("if (repository." + uc.existsNotIdMethodName() +
+                                    "(entity." + pkGetter + "(), " + params + ")) {");
+                            inner.indent(g -> g.line("throw new BusinessException(" + config.resolvedDuplicateCode() + ");"));
+                            inner.line("}");
+                            inner.blank();
+                        }
                     }
 
                     inner.line("mapper.updateEntity(entity, requestDTO);");
@@ -432,5 +440,9 @@ public class ServiceGenerator {
     private ImportRegistry addIf(ImportRegistry reg, boolean condition, String... fqns) {
         if (condition) for (String f : fqns) reg.add(f);
         return reg;
+    }
+    private boolean isFieldInRequest(ModuleConfig config, String fieldName) {
+        return config.getFields().stream()
+                .anyMatch(f -> f.getName().equals(fieldName) && !f.isExcludeFromRequest());
     }
 }

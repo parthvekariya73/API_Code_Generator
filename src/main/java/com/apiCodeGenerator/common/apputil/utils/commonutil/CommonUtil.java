@@ -2,7 +2,6 @@ package com.apiCodeGenerator.common.apputil.utils.commonutil;
 
 import com.apiCodeGenerator.common.apputil.response.Meta;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,17 +40,6 @@ public class CommonUtil {
 
     public static String getRequestId(HttpServletRequest request) {
         return (String) request.getAttribute("X-Request-ID");
-    }
-
-    public static Meta getMetaData(int page, int size, Page<?> pageObject) {
-        return  Meta.builder()
-                .page(page)
-                .size(size)
-                .totalElements((int) pageObject.getTotalElements())
-                .totalPages(pageObject.getTotalPages())
-                .hasNext(pageObject.hasNext())
-                .hasPrevious(pageObject.hasPrevious())
-                .build();
     }
 
     public static UUID getStringToUuid(String strUuid) {
