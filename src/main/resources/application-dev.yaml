@@ -12,9 +12,9 @@ spring:
       enabled: true
 
   datasource:
-    url: jdbc:postgresql://${DEV_DB_HOST:165.232.176.176}:${DEV_DB_PORT:5444}/${DEV_DB_NAME:e_com_admin}
-    username: ${DEV_DB_USERNAME:topia_admin}
-    password: ${DEV_DB_PASSWORD:T@p$aPI#@alldb50}    # MUST come from env
+    url: jdbc:postgresql://${DEV_DB_HOST:localhost}:${DEV_DB_PORT:5432}/${DEV_DB_NAME:healthcare_db}
+    username: ${DEV_DB_USERNAME:parthvekariya}
+    password: ${DEV_DB_PASSWORD:}    # MUST come from env
     hikari:
       maximum-pool-size: 10          # Increased from 5 (apiCodeGenerator needs more)
       leak-detection-threshold: 3000 # Catch leaks faster
