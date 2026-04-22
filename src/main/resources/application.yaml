@@ -3,7 +3,7 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
   application:
-    name: healthcare-resource-optimizer
+    name: apiCodeGenerator
 
   # ── PostgreSQL with REPLICA support ──
   datasource:
@@ -14,8 +14,8 @@ spring:
     driver-class-name: org.postgresql.Driver
 
     hikari:
-      pool-name: Healthcare-HikariPool
-      minimum-idle: 10              # Increased for healthcare SLA
+      pool-name: apiCodeGenerator-HikariPool
+      minimum-idle: 10              # Increased for apiCodeGenerator SLA
       maximum-pool-size: 50         # Tune: (cores * 2) + spindles
       idle-timeout: 300000          # 5 min (was 30s - too aggressive)
       connection-timeout: 5000      # 5 seconds max wait
@@ -32,7 +32,7 @@ spring:
         prepStmtCacheSize: 500
         prepStmtCacheSqlLimit: 2048
         useServerPrepStmts: true
-        ApplicationName: healthcare-optimizer
+        ApplicationName: apiCodeGenerator
 
   # ── Read-Only Replica for reporting/analytics ──
   datasource-replica:
@@ -40,7 +40,7 @@ spring:
     username: ${DB_REPLICA_USERNAME}
     password: ${DB_REPLICA_PASSWORD}
     hikari:
-      pool-name: Healthcare-ReplicaPool
+      pool-name: apiCodeGenerator-ReplicaPool
       maximum-pool-size: 30
       read-only: true
 
@@ -58,7 +58,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
-        default_batch_fetch_size: 50   # ⭐ Increased from 25 for healthcare entities
+        default_batch_fetch_size: 50   # ⭐ Increased from 25 for apiCodeGenerator entities
         max_fetch_depth: 3
         jdbc:
           batch_size: 100               # ⭐ Increased from 50 for bulk appointment updates
@@ -129,11 +129,11 @@ spring:
         enable.idempotence: true
         max.in.flight.requests.per.connection: 5
     consumer:
-      group-id: healthcare-optimizer-group
+      group-id: apiCodeGenerator-optimizer-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.healthcare.*"
+        spring.json.trusted.packages: "com.apiCodeGenerator.*"
       max-poll-records: 100
       fetch-min-size: 1024
 
@@ -148,7 +148,7 @@ Kafka:
     deal-history-events: deal-history-events
 
 server:
-  port: 8081
+  port: 9090
   shutdown: graceful
   compression:
     enabled: true
@@ -190,7 +190,7 @@ management:
       prometheus:
         enabled: true
     tags:
-      application: healthcare-optimizer
+      application: apiCodeGenerator
   info:
     env:
       enabled: true
@@ -198,7 +198,7 @@ management:
 logging:
   level:
     root: INFO
-    com.healthcare: INFO
+    com.apiCodeGenerator: INFO
     org.springframework.web: WARN
     org.hibernate: WARN
     com.zaxxer.hikari: WARN
@@ -211,31 +211,6 @@ logging:
       max-history: 30
       total-size-cap: 3GB
 
-# Custom Healthcare App Config
-healthcare:
-  appointment:
-    min-scheduling-notice: 60       # minutes
-    max-future-days: 90
-    default-duration: 30            # minutes
-    buffer-between-appointments: 5  # minutes for cleanup
-    overlapping-allowed: false
-    cancellation-window: 1440       # minutes (24 hours)
-
-  resource:
-    max-concurrent-patients-per-doctor: 1
-    room-turnover-minutes: 10
-    emergency-slot-reserve-percent: 20
-
-  optimization:
-    algorithm: "weighted-score"      # weighted-score, genetic, greedy
-    cache-ttl-seconds: 300
-    batch-size: 100
-    max-iterations: 1000
-
-  audit:
-    async: true
-    enabled: true
-    retention-days: 365
 
 # Secrets reference (actual values in Vault or env)
 # DO NOT HARDCODE ANYTHING BELOW

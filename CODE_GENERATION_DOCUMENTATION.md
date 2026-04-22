@@ -18,7 +18,7 @@ The system currently automates the generation of the following Spring Boot compo
 | Type | Format | Description |
 | :--- | :--- | :--- |
 | **Input** | `JSON Config` | A metadata file located in `src/main/resources/generator-configs/` (e.g., `mst_pharmacy.json`). |
-| **Output** | `Java Source` | Multiple `.java` files generated in the specified package (e.g., `com.healthcare.pharmacy.*`). |
+| **Output** | `Java Source` | Multiple `.java` files generated in the specified package (e.g., `com.apiCodeGenerator.pharmacy.*`). |
 
 ---
 
