@@ -50,7 +50,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v2/generator")
 @RequiredArgsConstructor
-@Profile("dev") // ← SAFETY: only available in dev profile
 @CrossOrigin(origins = "*")
 public class GeneratorRunner {
 

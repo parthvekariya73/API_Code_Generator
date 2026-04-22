@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.0.5'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.gradleup.shadow' version '8.3.10'
 }
 
 group = 'com.apiCodeGenerator'
@@ -145,6 +146,11 @@ dependencies {
 	implementation 'net.coobird:thumbnailator:0.4.20'
 	implementation 'com.github.jsqlparser:jsqlparser:5.1'
 
+	// ── AWS Lambda Support ────────────────────────────────────────────────────
+	implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot4:3.0.0'
+	implementation 'com.amazonaws:aws-lambda-java-core:1.2.3'
+	implementation 'com.amazonaws:aws-lambda-java-events:3.11.4'
+
 }
 
 // ── BOM imports ───────────────────────────────────────────────────────────────
@@ -191,4 +197,23 @@ jar {
 tasks.withType(AbstractArchiveTask).configureEach {
 	preserveFileTimestamps = false
 	reproducibleFileOrder  = true
+}
+
+// ── AWS Lambda Shadow Jar ───────────────────────────────────────────────────
+shadowJar {
+	archiveClassifier = 'aws'
+	dependencies {
+		exclude(dependency('org.springframework.boot:spring-boot-devtools'))
+	}
+	// Required for Spring Boot components to work inside the uber-jar
+	mergeServiceFiles()
+	append 'META-INF/spring.handlers'
+	append 'META-INF/spring.schemas'
+	append 'META-INF/spring.tooling'
+	
+	// Crucial for Spring Boot 3/4 to find its internal classes in an uber-jar
+	transform(com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer) {
+		paths = ['META-INF/spring.factories', 'META-INF/spring-autoconfigure-metadata.properties']
+		mergeStrategy = "append"
+	}
 }

@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  API Code Generator - AWS Lambda Deployment (Java 25 / Spring Boot 4)
+
+# Optimized for ap-south-1 (Mumbai) Region
+# No Database configuration included as requested.
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 1024
+    Runtime: java25
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        SPRING_PROFILES_ACTIVE: prod
+
+Resources:
+  ApiCodeGeneratorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # The Shadow JAR created by Gradle
+      Handler: com.apiCodeGenerator.StreamLambdaHandler::handleRequest
+      CodeUri: .
+      Events:
+        HttpApi:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiCodeGeneratorApi:
+    Description: "API Gateway endpoint URL (Mumbai Region)"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
