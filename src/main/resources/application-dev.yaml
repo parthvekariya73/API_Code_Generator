@@ -59,27 +59,6 @@ app:
     secret: ${DEV_JWT_SECRET:Q3Y1bW9wN213eHpxMnRmdTZhYjM0cnk4OTAwM25iMGQxcGxlNmF1cjRrZXk4NzY1NDMyMTEwYmFzZTY0c2VjcmV0MjAyNQ==}
     expiration-time: ${DEV_JWT_EXPIRATION:604800000}
 
-# Mail Configuration
-mail:
-  host: email-smtp.eu-west-2.amazonaws.com
-  port: 587
-  username: AKIA6QB7T3KA3JZ42VJO
-  password: BP0V2bQAKikSVZ1A3oiBgec9Ybd/jqEN3nD0lka9cFQW
-  from: donotreply@novumgen.uk
-  fromname: RI(Regulatory-Intelligence)
-  smtp:
-    auth: true
-    starttls:
-      enable: true
-    ssl:
-      trust: email-smtp.eu-west-2.amazonaws.com
-
-# File Upload Configuration
-file:
-  upload:
-    max-size: 52428800
-    local-dir: uploads/
-    allowed-types: "*"    # image/jpeg, image/png, application/pdf
 
 # ⚠️ REMOVED hardcoded mail, spaces, audit configs
 # These should NEVER be in YAML files
