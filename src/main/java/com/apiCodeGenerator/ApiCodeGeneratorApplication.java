@@ -3,7 +3,7 @@ package com.apiCodeGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.apiCodeGenerator")
 public class ApiCodeGeneratorApplication {
 
 	public static void main(String[] args) {

@@ -197,10 +197,15 @@ shadowJar {
 	append 'META-INF/spring.handlers'
 	append 'META-INF/spring.schemas'
 	append 'META-INF/spring.tooling'
+	append 'META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports'
 	
 	// Crucial for Spring Boot 3/4 to find its internal classes in an uber-jar
 	transform(com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer) {
-		paths = ['META-INF/spring.factories', 'META-INF/spring-autoconfigure-metadata.properties']
+		paths = [
+			'META-INF/spring.factories', 
+			'META-INF/spring-autoconfigure-metadata.properties',
+			'META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports'
+		]
 		mergeStrategy = "append"
 	}
 }

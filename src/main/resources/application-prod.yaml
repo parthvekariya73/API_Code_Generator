@@ -8,6 +8,9 @@ spring:
   application:
     name: apiCodeGenerator
 
+  main:
+    allow-bean-definition-overriding: true
+
   # Async Task Executor (tuned for production)
   task:
     execution:
@@ -19,11 +22,11 @@ spring:
       thread-name-prefix: "gen-prod-"
 
 server:
-  port: ${PORT:8080}
-  error:
-    include-message: never
-    include-stacktrace: never
-    include-exception: false
+  # Disable filters that conflict with AWS Lambda container
+  servlet:
+    encoding:
+      enabled: false
+    register-default-servlet: false
   # Graceful shutdown is important for Lambda container lifecycle
   shutdown: graceful
 

@@ -1,7 +1,8 @@
 package com.apiCodeGenerator;
 
 import com.amazonaws.serverless.exceptions.ContainerInitializationException;
-import com.amazonaws.serverless.proxy.model.AwsProxyRequest;
+import com.amazonaws.serverless.proxy.internal.LambdaContainerHandler;
+import com.amazonaws.serverless.proxy.model.HttpApiV2ProxyRequest;
 import com.amazonaws.serverless.proxy.model.AwsProxyResponse;
 import com.amazonaws.serverless.proxy.spring.SpringBootLambdaContainerHandler;
 import com.amazonaws.services.lambda.runtime.Context;
@@ -18,18 +19,23 @@ import java.io.OutputStream;
  */
 @Slf4j
 public class StreamLambdaHandler implements RequestStreamHandler {
-    private static final SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
+    private static final SpringBootLambdaContainerHandler<HttpApiV2ProxyRequest, AwsProxyResponse> handler;
 
     static {
         try {
-            // Load the Spring Boot application
-            handler = SpringBootLambdaContainerHandler.getAwsProxyHandler(ApiCodeGeneratorApplication.class);
+            // FORCED FIX: These MUST be set before the handler is initialized
+            System.setProperty("server.servlet.encoding.enabled", "false");
+            System.setProperty("spring.main.allow-bean-definition-overriding", "true");
             
-            // Set any required profiles (e.g., prod)
-            // handler.activateSpringProfiles("prod");
+            // In v3.0.0, use the unified class with the HttpApiV2 factory method
+            handler = SpringBootLambdaContainerHandler.getHttpApiV2ProxyHandler(ApiCodeGeneratorApplication.class);
+
+            handler.activateSpringProfiles("prod");
+            
+            // IMPORTANT: Tell the handler to treat ZIP files as binary data
+            handler.getContainerConfig().addBinaryContentTypes("application/zip", "application/octet-stream");
             
         } catch (ContainerInitializationException e) {
-            // if we fail here, there is nothing we can do but throw a runtime exception
             log.error("Could not initialize Spring Boot application", e);
             throw new RuntimeException("Could not initialize Spring Boot application", e);
         }
@@ -38,8 +44,8 @@ public class StreamLambdaHandler implements RequestStreamHandler {
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context)
             throws IOException {
-        // Automatically strips the /default/ApiCodeGenerator prefix if it exists in the request
-        handler.stripBasePath("/default/ApiCodeGenerator");
+        // Strip the stage prefix if it exists, otherwise keep the path as is
+        handler.stripBasePath("/default");
         handler.proxyStream(inputStream, outputStream, context);
     }
 }
