@@ -24,13 +24,13 @@ public class StreamLambdaHandler implements RequestStreamHandler {
     static {
         try {
             // FORCED FIX: These MUST be set before the handler is initialized
-            System.setProperty("server.servlet.encoding.enabled", "false");
-            System.setProperty("spring.main.allow-bean-definition-overriding", "true");
+            // System.setProperty("server.servlet.encoding.enabled", "false");
+            // System.setProperty("spring.main.allow-bean-definition-overriding", "true");
             
             // In v3.0.0, use the unified class with the HttpApiV2 factory method
             handler = SpringBootLambdaContainerHandler.getHttpApiV2ProxyHandler(ApiCodeGeneratorApplication.class);
 
-            handler.activateSpringProfiles("prod");
+            // handler.activateSpringProfiles("prod");
             
             // IMPORTANT: Tell the handler to treat ZIP and DOCX files as binary data
             handler.getContainerConfig().addBinaryContentTypes(
