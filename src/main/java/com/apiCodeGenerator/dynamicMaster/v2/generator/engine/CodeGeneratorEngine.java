@@ -55,6 +55,7 @@ public class CodeGeneratorEngine {
     private final MapperGenerator       mapperGenerator;
     private final ServiceGenerator      serviceGenerator;
     private final ControllerGenerator   controllerGenerator;
+    private final DocumentationGenerator documentationGenerator;
 
     // ─────────────────────────────────────────────────────────
     // Public API
@@ -149,6 +150,13 @@ public class CodeGeneratorEngine {
                 basePath + "/controller/" + entityName + "Controller.java",
                 dryRun));
 
+        // ── 11. Documentation (Word) ───────────────────────────
+        byte[] docBytes = documentationGenerator.generate(config);
+        results.add(generateBinary(config, entityName, "Documentation",
+                docBytes,
+                basePath + "/docs/" + entityName + "_Documentation.docx",
+                dryRun));
+
         // ── Summary ────────────────────────────────────────────
         long written = results.stream().filter(GenerationResult::isWritten).count();
         long errors  = results.stream().filter(GenerationResult::hasError).count();
@@ -228,12 +236,58 @@ public class CodeGeneratorEngine {
     }
 
     /**
+     * Generate a binary component (like Word docs), optionally write to disk.
+     */
+    private GenerationResult generateBinary(ModuleConfig config,
+                                            String entityName,
+                                            String componentType,
+                                            byte[] content,
+                                            String filePath,
+                                            boolean dryRun) {
+        GenerationResult.GenerationResultBuilder result = GenerationResult.builder()
+                .componentType(componentType)
+                .filePath(filePath)
+                .binaryContent(content);
+
+        if (content == null) {
+            result.written(false).error("Generator returned null — skipped");
+            return result.build();
+        }
+
+        if (dryRun) {
+            log.info("  [DRY-RUN] {} → {} ({} bytes)", componentType, filePath, content.length);
+            result.written(false);
+            return result.build();
+        }
+
+        try {
+            writeBinaryFile(filePath, content);
+            log.info("  ✓ {} → {}", componentType, filePath);
+            result.written(true);
+        } catch (IOException ex) {
+            log.error("  ✗ {} → {} FAILED: {}", componentType, filePath, ex.getMessage());
+            result.written(false).error(ex.getMessage());
+        }
+
+        return result.build();
+    }
+
+    /**
      * Write content to a file, creating parent directories as needed.
      */
     private void writeFile(String filePath, String content) throws IOException {
         Path path = Paths.get(filePath);
         Files.createDirectories(path.getParent());
         Files.writeString(path, content, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Write binary content to a file.
+     */
+    private void writeBinaryFile(String filePath, byte[] content) throws IOException {
+        Path path = Paths.get(filePath);
+        Files.createDirectories(path.getParent());
+        Files.write(path, content);
     }
 
     /**

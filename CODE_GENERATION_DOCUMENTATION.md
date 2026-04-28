@@ -13,6 +13,7 @@ The system currently automates the generation of the following Spring Boot compo
 *   **API Layer:** REST Controllers with standard CRUD, pagination, and search endpoints.
 *   **Data Transformation:** DTOs (Request/Response) and MapStruct-style mappers.
 *   **UI Helpers:** Projection-based dropdown models for frontend integration.
+*   **Documentation:** Automatic generation of professional Word documents (.docx) for the entire module.
 
 ## 3. 📥 Input / 📤 Output
 | Type | Format | Description |

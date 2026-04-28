@@ -18,6 +18,9 @@ public class GenerationResult {
     /** Generated Java source code */
     private String content;
 
+    /** Binary content (e.g. for .docx) */
+    private byte[] binaryContent;
+
     /** Component type for logging: "Entity", "Repository", etc. */
     private String componentType;
 
@@ -29,6 +32,10 @@ public class GenerationResult {
 
     public boolean hasError() {
         return error != null;
+    }
+
+    public boolean isBinary() {
+        return binaryContent != null;
     }
 
     public int lineCount() {

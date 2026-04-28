@@ -35,14 +35,25 @@ public class ZipService {
              ZipOutputStream zos = new ZipOutputStream(baos)) {
             
             for (GenerationResult result : results) {
-                if (result.getContent() == null || result.getFilePath() == null) {
+                if (result.getFilePath() == null) {
+                    continue;
+                }
+
+                // Skip if both content and binaryContent are null
+                if (result.getContent() == null && result.getBinaryContent() == null) {
                     continue;
                 }
                 
                 // Add the file to the ZIP
                 ZipEntry entry = new ZipEntry(result.getFilePath());
                 zos.putNextEntry(entry);
-                zos.write(result.getContent().getBytes(StandardCharsets.UTF_8));
+
+                if (result.isBinary()) {
+                    zos.write(result.getBinaryContent());
+                } else if (result.getContent() != null) {
+                    zos.write(result.getContent().getBytes(StandardCharsets.UTF_8));
+                }
+
                 zos.closeEntry();
             }
             

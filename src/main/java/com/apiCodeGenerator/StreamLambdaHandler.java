@@ -32,8 +32,12 @@ public class StreamLambdaHandler implements RequestStreamHandler {
 
             handler.activateSpringProfiles("prod");
             
-            // IMPORTANT: Tell the handler to treat ZIP files as binary data
-            handler.getContainerConfig().addBinaryContentTypes("application/zip", "application/octet-stream");
+            // IMPORTANT: Tell the handler to treat ZIP and DOCX files as binary data
+            handler.getContainerConfig().addBinaryContentTypes(
+                "application/zip", 
+                "application/octet-stream",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            );
             
         } catch (ContainerInitializationException e) {
             log.error("Could not initialize Spring Boot application", e);
